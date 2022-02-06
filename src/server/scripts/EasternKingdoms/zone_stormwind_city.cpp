@@ -19,10 +19,13 @@
 #include "Creature.h"
 #include "Player.h"
 #include "ScriptedCreature.h"
+#include <Entities/Creature/GossipDef.h>
+#include <AI/ScriptedAI/ScriptedGossip.h>
 
 enum StormwindQuests
 {
     QUEST_TIDES_OF_WAR                          = 46727,
+    QUEST_THE_DARK_PORTAL                       = 34398,
 
     SPELL_KILL_CREDIT_REPORT_ANDUIN             = 269581,
     SPELL_CONVERSATION_TIDES_OF_WAR_MAIN        = 240612,
@@ -34,6 +37,30 @@ enum StormwindQuests
     QUEST_THE_MISSION = 29548,
 };
 
+enum MapsID
+{
+    MAP_BLASTED_LANDS_PHASED = 1190
+};
+
+Position blastedlandsteleportpos{ -11272.7f, -3638.7f, 8.2f, 3.01f };
+
+class stormwind_phase_changes : public ZoneScript
+{
+public:
+    stormwind_phase_changes() : ZoneScript("stormwind_phase_changes") { }
+    void OnPlayerEnter(Player* player) override
+    {
+        if (player->HasQuest(QUEST_THE_DARK_PORTAL))
+        {
+            player->GetPhaseShift().AddPhase(6666,PhaseFlags::Personal,0,0);
+        }
+    }
+
+    void OnPlayerExit(Player* player) override
+    {
+
+    }
+};
 // 120756
 class npc_anduin_tides_of_war : public ScriptedAI
 {
@@ -172,8 +199,33 @@ public:
     }
 };
 
+//149626 Vanguard Battlemage
+class npc_vanguard_battlemage_149626 : public ScriptedAI
+{
+public:
+    npc_vanguard_battlemage_149626(Creature* creature) : ScriptedAI(creature) { }
+
+    void sGossipSelect(Player* player, uint32 /*menuId*/, uint32 /*gossipListId*/) override
+    {
+        if (player->GetQuestStatus(QUEST_THE_DARK_PORTAL) == QUEST_STATUS_INCOMPLETE)
+        {
+            player->KilledMonsterCredit(149625);
+            player->TeleportTo(MAP_BLASTED_LANDS_PHASED, blastedlandsteleportpos, player->GetOrientation());
+            player->CastSpell(player,176111);
+        }
+
+        else if(player->GetQuestStatus(QUEST_THE_DARK_PORTAL) == QUEST_STATUS_REWARDED)
+        {
+            player->TeleportTo(MAP_BLASTED_LANDS_PHASED, blastedlandsteleportpos, player->GetOrientation());
+        }
+    }
+};
+
+
 void AddSC_stormwind_city()
 {
+    RegisterZoneScript(stormwind_phase_changes);
+    RegisterCreatureAI(npc_vanguard_battlemage_149626);
     RegisterCreatureAI(npc_anduin_tides_of_war);
     RegisterConversationScript(conversation_tides_of_war);
     RegisterCreatureAI(npc_jaina_tides_of_war);

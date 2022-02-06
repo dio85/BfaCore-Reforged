@@ -94,12 +94,12 @@ public:
     void OnPlayerEnter(Player* player) override
     {
         if (player->getLevel() <= 90)
-            player->SeamlessTeleportToMap(1945);
+            player->SeamlessTeleportToMap(MAP_WOD_BLASTED_LANDS_PHASE);
     }
 
     void OnPlayerExit(Player* player) override
     {
-        if (player->GetMapId() == 1945)
+        if (player->GetMapId() == MAP_WOD_BLASTED_LANDS_PHASE)
             player->SeamlessTeleportToMap(0);
             player->RemoveAurasDueToSpell(SPELL_TIME_TRAVELLING);
     }
@@ -120,7 +120,7 @@ public:
         {
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "I would like to visit the past", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 0);
         }
-        else if (player->GetMapId() == 1945)
+        else if (player->GetMapId() == MAP_WOD_BLASTED_LANDS_PHASE)
         {
             AddGossipItemFor(player, GOSSIP_ICON_CHAT, "Return to the present", GOSSIP_SENDER_MAIN, GOSSIP_ACTION_INFO_DEF + 1);
         }
@@ -136,7 +136,7 @@ public:
         if (action == GOSSIP_ACTION_INFO_DEF + 0)
         {
             player->CastSpell(player, SPELL_TIME_TRAVELLING, true);
-            player->SeamlessTeleportToMap(1945);
+            player->SeamlessTeleportToMap(MAP_WOD_BLASTED_LANDS_PHASE);
         }
         else if (action == GOSSIP_ACTION_INFO_DEF + 1)
         {
