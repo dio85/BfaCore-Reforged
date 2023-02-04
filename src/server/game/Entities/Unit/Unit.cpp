@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 BfaCore Reforged
+ * Copyright (C) 2022 BfaCore Reforged
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -15534,6 +15534,22 @@ void Unit::GetAreaTriggerListWithSpellIDInRange(std::list<AreaTrigger*>& list, u
                 return true;
 
             return false;
+        });
+    }
+}
+
+void Unit::SetInMovement(bool toSet, uint32 timer) {
+
+    if (toSet == true && HasUnitState(UNIT_STATE_ROOT))
+        ClearUnitState(UNIT_STATE_ROOT);
+
+    if (toSet == false && !HasUnitState(UNIT_STATE_ROOT))
+        AddUnitState(UNIT_STATE_ROOT);
+
+    if (timer != 0)
+    {
+        GetAI()->AddTimedDelayedOperation(timer, [this]() -> void {
+            HasUnitState(UNIT_STATE_ROOT) ? ClearUnitState(UNIT_STATE_ROOT) : AddUnitState(UNIT_STATE_ROOT);
         });
     }
 }

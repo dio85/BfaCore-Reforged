@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 BfaCore Reforged
+ * Copyright (C) 2022 BfaCore Reforged
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -288,6 +288,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         void SendZoneUnderAttackMessage(Player* attacker);
 
         void SetInCombatWithZone();
+        void SetCombatDistance(float dist) { m_CombatDistance = dist < 5.0f ? 5.0f : dist; }
 
         bool hasQuest(uint32 quest_id) const override;
         bool hasInvolvedQuest(uint32 quest_id)  const override;

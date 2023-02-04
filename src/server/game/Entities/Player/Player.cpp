@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 BfaCore Reforged
+ * Copyright (C) 2022 BfaCore Reforged
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -51,6 +51,7 @@
 #include "CombatPackets.h"
 #include "Common.h"
 #include "ConditionMgr.h"
+#include "Config.h"
 #include "CreatureAI.h"
 #include "DB2Stores.h"
 #include "DatabaseEnv.h"
@@ -9527,6 +9528,7 @@ void Player::SendInitWorldStates(uint32 zoneid, uint32 areaid)
     packet.Worldstates.emplace_back(2261, 0);              // 4
     packet.Worldstates.emplace_back(2260, 0);              // 5
     packet.Worldstates.emplace_back(2259, 0);              // 6
+    packet.Worldstates.emplace_back(15893, 1);             // 7 Mythic
 
     packet.Worldstates.emplace_back(3191, int32(sWorld->getBoolConfig(CONFIG_ARENA_SEASON_IN_PROGRESS) ? sWorld->getIntConfig(CONFIG_ARENA_SEASON_ID) : 0)); // 7 Current Season - Arena season in progress
                                                                                                                                                               // 0 - End of season

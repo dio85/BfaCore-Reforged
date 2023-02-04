@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 BfaCore Reforged
+ * Copyright (C) 2022 BfaCore Reforged
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -289,6 +289,7 @@ struct boss_ataldazar_volkaal : public BossAI
         Talk(TALK_DEATH);
         _JustDied();
         instance->SetBossState(DATA_VOLKAAL, DONE);
+        OpenBossGate(instance);
         std::list<Player*> playerList;
         me->GetPlayerListInGrid(playerList, 100.0f);
         for (auto player : playerList)
@@ -354,7 +355,7 @@ struct npc_ataldazar_reanimation_totem : public ScriptedAI
     void SpellHitTarget(Unit* /*target*/, SpellInfo const* /*spell*/) override
     {
         if (Creature* boss = me->FindNearestCreature(NPC_VOLKAAL, 100.f))
-                boss->AI()->DoAction(ACTION_TOTEM_HEALED);
+            boss->AI()->DoAction(ACTION_TOTEM_HEALED);
     }
 
     void EnterCombat(Unit* attacker) override
