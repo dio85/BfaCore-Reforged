@@ -16541,6 +16541,10 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
         }
     }
 
+    // QuestPackageItem.db2
+    if (rewardProto && quest->GetQuestPackageID())
+        RewardQuestPackage(quest->GetQuestPackageID(), reward);
+
     for (uint8 i = 0; i < QUEST_REWARD_CURRENCY_COUNT; ++i)
         if (quest->RewardCurrencyId[i])
             ModifyCurrency(quest->RewardCurrencyId[i], quest->RewardCurrencyCount[i]);
@@ -16548,7 +16552,6 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
     if (uint32 skill = quest->GetRewardSkillId())
         UpdateSkillPro(skill, 1000, quest->GetRewardSkillPoints());
 
-    RewardReputation(quest);
 
     uint16 log_slot = FindQuestSlot(quest_id);
     if (log_slot < MAX_QUEST_LOG_SIZE)
@@ -16618,6 +16621,12 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
         SetRewardedQuest(quest_id);
 
     RemoveActiveQuest(quest, false);
+    if (quest->CanIncreaseRewardedQuestCounters())
+        SetRewardedQuest(quest_id);
+
+    SendQuestReward(quest, questGiver ? questGiver->ToCreature() : nullptr, XP, !announce);
+
+    RewardReputation(quest);
 
     // StoreNewItem, mail reward, etc. save data directly to the database
     // to prevent exploitable data desynchronisation we save the quest status to the database too
@@ -18413,7 +18422,13 @@ void Player::SendQuestReward(Quest const* quest, Creature const* questGiver, uin
         if (questGiver->IsGossip())
             packet.LaunchGossip = true;
         else if (questGiver->IsQuestGiver())
-            packet.LaunchQuest = true;
+        {
+            QuestGiverStatus status = const_cast<Player*>(this)->GetQuestDialogStatus(const_cast<Creature*>(questGiver));
+            QuestGiverStatus mask = QuestGiverStatus::DIALOG_STATUS_NONE;
+
+            if ((status & mask) != status)
+                packet.LaunchQuest = true;
+        }
         else if (quest->GetNextQuestInChain() && !quest->HasFlag(QUEST_FLAGS_AUTOCOMPLETE))
             packet.UseQuestReward = true;
     }
