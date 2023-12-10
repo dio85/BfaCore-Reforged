@@ -938,7 +938,7 @@ struct BattlePetStateLoadInfo
         static DB2FieldMeta const fields[] =
         {
             { false, FT_INT, "ID" },
-            { false, FT_STRING, "LuaName" },
+            { false, FT_STRING_NOT_LOCALIZED, "LuaName" },
             { false, FT_SHORT, "Flags" },
             { false, FT_SHORT, "BattlePetVisualID" },
         };

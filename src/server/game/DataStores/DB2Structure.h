@@ -551,7 +551,7 @@ struct BattlePetSpeciesXAbilityEntry
 struct BattlePetStateEntry
 {
     uint32      ID;
-    LocalizedString* LuaName;
+    char const* LuaName;
     uint16      Flags;
     uint16      BattlePetVisualID;
 };
