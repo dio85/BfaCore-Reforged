@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -309,9 +309,9 @@ bool AzeriteItem::HasUnlockedEssenceSlot(uint8 slot) const
 uint32 AzeriteItem::GetEssenceRank(uint32 azeriteEssenceId) const
 {
     int32 index = m_azeriteItemData->UnlockedEssences.FindIndexIf([azeriteEssenceId](UF::UnlockedAzeriteEssence const& essence)
-    {
-        return essence.AzeriteEssenceID == azeriteEssenceId;
-    });
+        {
+            return essence.AzeriteEssenceID == azeriteEssenceId;
+        });
 
     if (index < 0)
         return 0;
@@ -322,9 +322,9 @@ uint32 AzeriteItem::GetEssenceRank(uint32 azeriteEssenceId) const
 void AzeriteItem::SetEssenceRank(uint32 azeriteEssenceId, uint32 rank)
 {
     int32 index = m_azeriteItemData->UnlockedEssences.FindIndexIf([azeriteEssenceId](UF::UnlockedAzeriteEssence const& essence)
-    {
-        return essence.AzeriteEssenceID == azeriteEssenceId;
-    });
+        {
+            return essence.AzeriteEssenceID == azeriteEssenceId;
+        });
 
     if (!rank && index >= 0)
     {
@@ -364,9 +364,9 @@ void AzeriteItem::SetSelectedAzeriteEssences(uint32 specializationId)
             .ModifyValue(&UF::SelectedAzeriteEssences::Enabled), 0);
 
     index = m_azeriteItemData->SelectedEssences.FindIndexIf([specializationId](UF::SelectedAzeriteEssences const& essences)
-    {
-        return essences.SpecializationID == specializationId;
-    });
+        {
+            return essences.SpecializationID == specializationId;
+        });
 
     if (index >= 0)
         SetUpdateFieldValue(m_values.ModifyValue(&AzeriteItem::m_azeriteItemData).ModifyValue(&UF::AzeriteItemData::SelectedEssences, index)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -47,20 +47,20 @@ void AzeriteEmpoweredItem::SaveToDB(CharacterDatabaseTransaction& trans)
 
     switch (GetState())
     {
-        case ITEM_NEW:
-        case ITEM_CHANGED:
-        {
-            stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ITEM_INSTANCE_AZERITE_EMPOWERED);
-            stmt->setUInt64(0, GetGUID().GetCounter());
-            for (uint32 i = 0; i < MAX_AZERITE_EMPOWERED_TIER; ++i)
-                stmt->setInt32(1 + i, m_azeriteEmpoweredItemData->Selections[i]);
+    case ITEM_NEW:
+    case ITEM_CHANGED:
+    {
+        stmt = CharacterDatabase.GetPreparedStatement(CHAR_INS_ITEM_INSTANCE_AZERITE_EMPOWERED);
+        stmt->setUInt64(0, GetGUID().GetCounter());
+        for (uint32 i = 0; i < MAX_AZERITE_EMPOWERED_TIER; ++i)
+            stmt->setInt32(1 + i, m_azeriteEmpoweredItemData->Selections[i]);
 
-            trans->Append(stmt);
-            break;
-        }
-        case ITEM_REMOVED:
-        default:
-            break;
+        trans->Append(stmt);
+        break;
+    }
+    case ITEM_REMOVED:
+    default:
+        break;
     }
 
     Item::SaveToDB(trans);
@@ -119,9 +119,9 @@ uint32 AzeriteEmpoweredItem::GetRequiredAzeriteLevelForTier(uint32 tier) const
 int32 AzeriteEmpoweredItem::GetTierForAzeritePower(Classes playerClass, int32 azeritePowerId) const
 {
     auto azeritePowerItr = std::find_if(m_azeritePowers->begin(), m_azeritePowers->end(), [&](AzeritePowerSetMemberEntry const* power)
-    {
-        return power->AzeritePowerID == azeritePowerId && power->Class == playerClass;
-    });
+        {
+            return power->AzeritePowerID == azeritePowerId && power->Class == playerClass;
+        });
     if (azeritePowerItr != m_azeritePowers->end())
         return (*azeritePowerItr)->Tier;
 
@@ -232,8 +232,8 @@ void AzeriteEmpoweredItem::InitAzeritePowerData()
     if (m_azeritePowers)
     {
         m_maxTier = (*std::max_element(m_azeritePowers->begin(), m_azeritePowers->end(), [](AzeritePowerSetMemberEntry const* a1, AzeritePowerSetMemberEntry const* a2)
-        {
-            return a1->Tier < a2->Tier;
-        }))->Tier;
+            {
+                return a1->Tier < a2->Tier;
+            }))->Tier;
     }
 }
