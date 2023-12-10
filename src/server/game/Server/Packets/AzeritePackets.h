@@ -134,5 +134,5 @@ namespace WorldPackets
         };
     }
 }
-
+ByteBuffer& operator>>(ByteBuffer& data, WorldPackets::Azerite::PlayerAzeriteItemEquippedStatusChanged& equiped);
 #endif // AzeriteItemPackets_h__

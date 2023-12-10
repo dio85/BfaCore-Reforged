@@ -69,6 +69,12 @@ void WorldPackets::Azerite::AzeriteEmpoweredItemSelectPower::Read()
     _worldPacket >> Slot;
 }
 
+ByteBuffer& operator>>(ByteBuffer& data, WorldPackets::Azerite::PlayerAzeriteItemEquippedStatusChanged& equiped)
+{
+    data >> equiped.IsHeartEquipped;
+    return data;
+}
+
 WorldPacket const* WorldPackets::Azerite::PlayerAzeriteItemEquippedStatusChanged::Write()
 {
     _worldPacket.WriteBit(IsHeartEquipped);
