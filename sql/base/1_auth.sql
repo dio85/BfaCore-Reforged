@@ -4,9 +4,6 @@
 *********************************************************************
 */
 
-CREATE DATABASE IF NOT EXISTS `auth_bfa` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
-USE `auth_bfa`;
-
 CREATE TABLE IF NOT EXISTS `account` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Identifier',
   `username` varchar(32) NOT NULL DEFAULT '',
@@ -23,7 +20,7 @@ CREATE TABLE IF NOT EXISTS `account` (
   `failed_logins` int(10) unsigned NOT NULL DEFAULT '0',
   `locked` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `lock_country` varchar(2) NOT NULL DEFAULT '00',
-  `last_login` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `last_login` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `online` tinyint(3) unsigned NOT NULL DEFAULT '0',
   `EXPANSION` tinyint(3) unsigned NOT NULL DEFAULT '8',
   `mutetime` bigint(20) NOT NULL DEFAULT '0',
@@ -1953,7 +1950,7 @@ CREATE TABLE IF NOT EXISTS `store_history` (
   `trans_project` varchar(255) NOT NULL DEFAULT '',
   `trans_realm` int(11) unsigned NOT NULL DEFAULT '0',
   `dt_buy` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `dt_return` timestamp NULL DEFAULT '0000-00-00 00:00:00',
+  `dt_return` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `item_guid` (`item_guid`) USING BTREE,
   KEY `realm` (`realm`) USING BTREE,
