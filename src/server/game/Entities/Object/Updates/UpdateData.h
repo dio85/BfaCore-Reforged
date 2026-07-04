@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -27,40 +27,39 @@ class WorldPacket;
 
 enum OBJECT_UPDATE_TYPE
 {
-    UPDATETYPE_VALUES               = 0,
-    UPDATETYPE_CREATE_OBJECT        = 1,
-    UPDATETYPE_CREATE_OBJECT2       = 2,
+    UPDATETYPE_VALUES = 0,
+    UPDATETYPE_CREATE_OBJECT = 1,
+    UPDATETYPE_CREATE_OBJECT2 = 2,
     UPDATETYPE_OUT_OF_RANGE_OBJECTS = 3,
 };
 
 class UpdateData
 {
-    public:
-        UpdateData(uint32 map);
-        UpdateData(UpdateData&& right) : m_map(right.m_map), m_blockCount(right.m_blockCount),
-            m_outOfRangeGUIDs(std::move(right.m_outOfRangeGUIDs)),
-            m_data(std::move(right.m_data))
-        {
-        }
+public:
+    UpdateData(uint32 map);
+    UpdateData(UpdateData&& right) : m_map(right.m_map), m_blockCount(right.m_blockCount),
+        m_outOfRangeGUIDs(std::move(right.m_outOfRangeGUIDs)),
+        m_data(std::move(right.m_data))
+    {}
 
-        void AddDestroyObject(ObjectGuid guid);
-        void AddOutOfRangeGUID(GuidSet& guids);
-        void AddOutOfRangeGUID(ObjectGuid guid);
-        void AddUpdateBlock(const ByteBuffer &block);
-        bool BuildPacket(WorldPacket* packet);
-        bool HasData() const { return m_blockCount > 0 || !m_outOfRangeGUIDs.empty(); }
-        void Clear();
+    void AddDestroyObject(ObjectGuid guid);
+    void AddOutOfRangeGUID(GuidSet& guids);
+    void AddOutOfRangeGUID(ObjectGuid guid);
+    void AddUpdateBlock(ByteBuffer const& block);
+    bool BuildPacket(WorldPacket* packet);
+    bool HasData() const { return m_blockCount > 0 || !m_outOfRangeGUIDs.empty(); }
+    void Clear();
 
-        GuidSet const& GetOutOfRangeGUIDs() const { return m_outOfRangeGUIDs; }
+    GuidSet const& GetOutOfRangeGUIDs() const { return m_outOfRangeGUIDs; }
 
-    protected:
-        uint32 m_map;
-        uint32 m_blockCount;
-        GuidSet m_destroyGUIDs;
-        GuidSet m_outOfRangeGUIDs;
-        ByteBuffer m_data;
+protected:
+    uint32 m_map;
+    uint32 m_blockCount;
+    GuidSet m_destroyGUIDs;
+    GuidSet m_outOfRangeGUIDs;
+    ByteBuffer m_data;
 
-        UpdateData(UpdateData const& right) = delete;
-        UpdateData& operator=(UpdateData const& right) = delete;
+    UpdateData(UpdateData const& right) = delete;
+    UpdateData& operator=(UpdateData const& right) = delete;
 };
 #endif

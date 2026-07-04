@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -32,7 +32,7 @@ namespace UF
 {
     void ObjectData::WriteCreate(ByteBuffer& data, EnumFlag<UpdateFieldFlag> fieldVisibilityFlags, Object const* owner, Player const* receiver) const
     {
-        data << int32(ViewerDependentValue<EntryIDTag>::GetValue(EntryID, owner, receiver));
+        data << int32(EntryID);
         data << uint32(ViewerDependentValue<DynamicFlagsTag>::GetValue(DynamicFlags, owner, receiver));
         data << float(Scale);
     }
@@ -51,7 +51,7 @@ namespace UF
         {
             if (changesMask[1])
             {
-                data << int32(ViewerDependentValue<EntryIDTag>::GetValue(EntryID, owner, receiver));
+                data << int32(EntryID);
             }
             if (changesMask[2])
             {
@@ -420,7 +420,6 @@ namespace UF
                 if (changesMask[27 + i])
                 {
                     Enchantment[i].WriteUpdate(data, ignoreNestedChangesMask, owner, receiver);
-
                 }
             }
         }
@@ -651,7 +650,6 @@ namespace UF
     }
 
     void AzeriteItemData::WriteUpdate(ByteBuffer& data, UpdateMask<9> const& changesMask, bool ignoreNestedChangesMask, AzeriteItem const* owner, Player const* receiver) const
-
     {
         data.WriteBits(changesMask.GetBlock(0), 9);
 
@@ -880,9 +878,9 @@ namespace UF
         {
             VirtualItems[i].WriteCreate(data, owner, receiver);
         }
-        data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags, 0, owner, receiver));
-        data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags2, 1, owner, receiver));
-        data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags3, 2, owner, receiver));
+        data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags, owner, receiver));
+        data << uint32(Flags2);
+        data << uint32(Flags3);
         data << uint32(ViewerDependentValue<AuraStateTag>::GetValue(AuraState, owner, receiver));
         for (std::size_t i = 0; i < 2; ++i)
         {
@@ -1261,15 +1259,15 @@ namespace UF
             }
             if (changesMask[42])
             {
-                data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags, 0, owner, receiver));
+                data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags, owner, receiver));
             }
             if (changesMask[43])
             {
-                data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags2, 1, owner, receiver));
+                data << uint32(Flags2);
             }
             if (changesMask[44])
             {
-                data << uint32(ViewerDependentValue<FlagsTag>::GetValue(Flags2, 2, owner, receiver));
+                data << uint32(Flags3);
             }
             if (changesMask[45])
             {
@@ -1780,7 +1778,7 @@ namespace UF
         data << uint32(StateFlags);
         data << uint32(EndTime);
         data << uint32(AcceptTime);
-        data << uint32(Field_10);
+        data << uint32(ObjectiveFlags);
         for (std::size_t i = 0; i < 24; ++i)
         {
             data << int16(ObjectiveProgress[i]);
@@ -1818,7 +1816,7 @@ namespace UF
             }
             if (changesMask[5])
             {
-                data << uint32(Field_10);
+                data << uint32(ObjectiveFlags);
             }
         }
         if (changesMask[6])
@@ -1839,7 +1837,7 @@ namespace UF
         Base::ClearChangesMask(StateFlags);
         Base::ClearChangesMask(EndTime);
         Base::ClearChangesMask(AcceptTime);
-        Base::ClearChangesMask(Field_10);
+        Base::ClearChangesMask(ObjectiveFlags);
         Base::ClearChangesMask(ObjectiveProgress);
         _changesMask.ResetAll();
     }
@@ -2954,9 +2952,9 @@ namespace UF
             if (changesMask[15])
             {
                 if (!ignoreNestedChangesMask)
-                    Transmog.WriteUpdateMask(data);
+                    ConditionalTransmog.WriteUpdateMask(data);
                 else
-                    WriteCompleteDynamicFieldUpdateMask(Transmog.size(), data);
+                    WriteCompleteDynamicFieldUpdateMask(ConditionalTransmog.size(), data);
             }
             if (changesMask[16])
             {
@@ -2975,9 +2973,9 @@ namespace UF
             if (changesMask[18])
             {
                 if (!ignoreNestedChangesMask)
-                    CharacterRestrictions.WriteUpdateMask(data);
+                    SpellPctModByLabel.WriteUpdateMask(data);
                 else
-                    WriteCompleteDynamicFieldUpdateMask(CharacterRestrictions.size(), data);
+                    WriteCompleteDynamicFieldUpdateMask(SpellPctModByLabel.size(), data);
             }
             if (changesMask[19])
             {
@@ -4431,7 +4429,7 @@ namespace UF
         data << uint32(CreatureID);
         data << uint32(CreatureDisplayInfoID);
         data << ActorGUID;
-        data << int32(Field_18);
+        data << int32(Id);
         data.WriteBits(Type, 1);
         data.FlushBits();
     }
@@ -4441,7 +4439,7 @@ namespace UF
         data << uint32(CreatureID);
         data << uint32(CreatureDisplayInfoID);
         data << ActorGUID;
-        data << int32(Field_18);
+        data << int32(Id);
         data.WriteBits(Type, 1);
         data.FlushBits();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -20,7 +20,7 @@
 #include "WorldPacket.h"
 #include "Opcodes.h"
 
-UpdateData::UpdateData(uint32 map) : m_map(map), m_blockCount(0) { }
+UpdateData::UpdateData(uint32 map) : m_map(map), m_blockCount(0) {}
 
 void UpdateData::AddDestroyObject(ObjectGuid guid)
 {
@@ -37,7 +37,7 @@ void UpdateData::AddOutOfRangeGUID(ObjectGuid guid)
     m_outOfRangeGUIDs.insert(guid);
 }
 
-void UpdateData::AddUpdateBlock(const ByteBuffer &block)
+void UpdateData::AddUpdateBlock(ByteBuffer const& block)
 {
     m_data.append(block);
     ++m_blockCount;

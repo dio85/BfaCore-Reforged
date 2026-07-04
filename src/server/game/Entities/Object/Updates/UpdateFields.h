@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,7 +28,6 @@
 class AreaTrigger;
 class AzeriteEmpoweredItem;
 class AzeriteItem;
-class AzeriteEmpoweredItem;
 class Bag;
 class ByteBuffer;
 class Conversation;
@@ -45,7 +44,6 @@ namespace UF
     struct ObjectData : public IsUpdateFieldStructureTag, public HasChangesMask<4>
     {
         UpdateField<int32, 0, 1> EntryID;
-        struct EntryIDTag : ViewerDependentValueTag<int32> {};
         UpdateField<uint32, 0, 2> DynamicFlags;
         struct DynamicFlagsTag : ViewerDependentValueTag<uint32> {};
         UpdateField<float, 0, 3> Scale;
@@ -358,7 +356,7 @@ namespace UF
         UpdateField<uint32, 0, 2> StateFlags;
         UpdateField<uint32, 0, 3> EndTime;
         UpdateField<uint32, 0, 4> AcceptTime;
-        UpdateField<uint32, 0, 5> Field_10;
+        UpdateField<uint32, 0, 5> ObjectiveFlags;
         UpdateFieldArray<int16, 24, 6, 7> ObjectiveProgress;
 
         void WriteCreate(ByteBuffer& data, Player const* owner, Player const* receiver) const;
@@ -539,7 +537,7 @@ namespace UF
         UpdateField<bool, 0, 2> BankAutoSortDisabled;
         UpdateField<bool, 0, 3> SortBagsRightToLeft;
         UpdateField<bool, 0, 4> InsertItemsLeftToRight;
-        UpdateFieldArray<DynamicUpdateField<UF::Research, 1, 1>, 1, 22, 23> Research;
+        UpdateFieldArray<DynamicUpdateFieldBase<UF::Research>, 1, 22, 23> Research;
         DynamicUpdateField<uint64, 0, 5> KnownTitles;
         DynamicUpdateField<uint16, 0, 6> ResearchSites;
         DynamicUpdateField<uint32, 0, 7> ResearchSiteProgress;
@@ -795,7 +793,7 @@ namespace UF
         uint32 CreatureID;
         uint32 CreatureDisplayInfoID;
         ObjectGuid ActorGUID;
-        int32 Field_18;
+        int32 Id;
         uint32 Type;
 
         void WriteCreate(ByteBuffer& data, Conversation const* owner, Player const* receiver) const;
@@ -816,4 +814,5 @@ namespace UF
     };
 
 }
+
 #endif // UpdateFields_h__

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 BfaCore Reforged
+ * This file is part of the TrinityCore Project. See AUTHORS file for Copyright information
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -25,66 +25,46 @@
 #include "Player.h"
 #include "SpellInfo.h"
 #include "SpellMgr.h"
-#include "TemporarySummon.h"
 #include "World.h"
 
 namespace UF
 {
-template<typename Tag>
-class ViewerDependentValue
-{
-};
+    template<typename Tag>
+    class ViewerDependentValue
+    {};
 
-template<>
-class ViewerDependentValue<UF::ObjectData::EntryIDTag>
-{
-public:
-    using ValueType = UF::ObjectData::EntryIDTag::ValueType;
-
-    static ValueType GetValue(ValueType entryID, Object const* object, Player const* /*receiver*/)
+    template<>
+    class ViewerDependentValue<UF::ObjectData::DynamicFlagsTag>
     {
-        if (Unit const* unit = object->ToUnit())
-            if (TempSummon const* tempSummon = unit->ToTempSummon())
-                if (tempSummon->GetSummonerGUID() == object->GetGUID())
-                    if (uint32 specificEntry = tempSummon->GetSummonerSpecificEntry())
-                        entryID = specificEntry;
+    public:
+        using ValueType = UF::ObjectData::DynamicFlagsTag::ValueType;
 
-        return entryID;
-    }
-};
-
-template<>
-class ViewerDependentValue<UF::ObjectData::DynamicFlagsTag>
-{
-public:
-    using ValueType = UF::ObjectData::DynamicFlagsTag::ValueType;
-
-    static ValueType GetValue(ValueType dynamicFlags, Object const* object, Player const* receiver)
-    {
-        if (Unit const* unit = object->ToUnit())
+        static ValueType GetValue(ValueType dynamicFlags, Object const* object, Player const* receiver)
         {
-            dynamicFlags &= ~UNIT_DYNFLAG_TAPPED;
-
-            if (Creature const* creature = object->ToCreature())
+            if (Unit const* unit = object->ToUnit())
             {
-                if (creature->HasLootRecipients() && !creature->IsTappedBy(receiver))
-                    dynamicFlags |= UNIT_DYNFLAG_TAPPED;
+                dynamicFlags &= ~UNIT_DYNFLAG_TAPPED;
 
-                if (!receiver->isAllowedToLoot(creature))
-                    dynamicFlags &= ~UNIT_DYNFLAG_LOOTABLE;
+                if (Creature const* creature = object->ToCreature())
+                {
+                    if (creature->HasLootRecipients() && !creature->IsTappedBy(receiver))
+                        dynamicFlags |= UNIT_DYNFLAG_TAPPED;
+
+                    if (!receiver->isAllowedToLoot(creature))
+                        dynamicFlags &= ~UNIT_DYNFLAG_LOOTABLE;
+                }
+
+                // unit UNIT_DYNFLAG_TRACK_UNIT should only be sent to caster of SPELL_AURA_MOD_STALKED auras
+                if (dynamicFlags & UNIT_DYNFLAG_TRACK_UNIT)
+                    if (!unit->HasAuraTypeWithCaster(SPELL_AURA_MOD_STALKED, receiver->GetGUID()))
+                        dynamicFlags &= ~UNIT_DYNFLAG_TRACK_UNIT;
             }
-
-            // unit UNIT_DYNFLAG_TRACK_UNIT should only be sent to caster of SPELL_AURA_MOD_STALKED auras
-            if (dynamicFlags & UNIT_DYNFLAG_TRACK_UNIT)
-                if (!unit->HasAuraTypeWithCaster(SPELL_AURA_MOD_STALKED, receiver->GetGUID()))
-                    dynamicFlags &= ~UNIT_DYNFLAG_TRACK_UNIT;
-        }
-        else if (GameObject const* gameObject = object->ToGameObject())
-        {
-            uint16 dynFlags = 0;
-            uint16 pathProgress = 0xFFFF;
-            switch (gameObject->GetGoType())
+            else if (GameObject const* gameObject = object->ToGameObject())
             {
+                uint16 dynFlags = 0;
+                uint16 pathProgress = 0xFFFF;
+                switch (gameObject->GetGoType())
+                {
                 case GAMEOBJECT_TYPE_QUESTGIVER:
                     if (gameObject->ActivateToQuest(receiver))
                         dynFlags |= GO_DYNFLAG_LO_ACTIVATE;
@@ -112,195 +92,177 @@ public:
                 }
                 default:
                     break;
+                }
+
+                dynamicFlags = (pathProgress << 16) | dynFlags;
             }
 
-            dynamicFlags = (pathProgress << 16) | dynFlags;
+            return dynamicFlags;
         }
+    };
 
-        return dynamicFlags;
-    }
-};
-
-template<>
-class ViewerDependentValue<UF::UnitData::DisplayIDTag>
-{
-public:
-    using ValueType = UF::UnitData::DisplayIDTag::ValueType;
-
-    static ValueType GetValue(ValueType displayId, Unit const* unit, Player const* receiver)
+    template<>
+    class ViewerDependentValue<UF::UnitData::DisplayIDTag>
     {
-        if (TempSummon const* tempSummon = unit->ToTempSummon())
-            if (tempSummon->GetSummonerGUID() == receiver->GetGUID())
-                if (uint32 specificDisplayID = tempSummon->GetSummonerSpecificDisplayID())
-                    displayId = specificDisplayID;
+    public:
+        using ValueType = UF::UnitData::DisplayIDTag::ValueType;
 
-        if (unit->IsCreature())
+        static ValueType GetValue(ValueType displayId, Unit const* unit, Player const* receiver)
         {
-            CreatureTemplate const* cinfo = unit->ToCreature()->GetCreatureTemplate();
-
-            // this also applies for transform auras
-            if (SpellInfo const* transform = sSpellMgr->GetSpellInfo(unit->getTransForm()))
-                for (SpellEffectInfo const* effect : transform->GetEffectsForDifficulty(unit->GetMap()->GetDifficultyID()))
-                    if (effect && effect->IsAura(SPELL_AURA_TRANSFORM))
-                        if (CreatureTemplate const* transformInfo = sObjectMgr->GetCreatureTemplate(effect->MiscValue))
-                        {
-                            cinfo = transformInfo;
-                            break;
-                        }
-
-            if (receiver->IsGameMaster())
+            if (unit->IsCreature())
             {
+                CreatureTemplate const* cinfo = unit->ToCreature()->GetCreatureTemplate();
+
+                // this also applies for transform auras
+                if (SpellInfo const* transform = sSpellMgr->GetSpellInfo(unit->getTransForm(), unit->GetMap()->GetDifficultyID()))
+                    for (SpellEffectInfo const* effect : transform->GetEffects())
+                        if (effect && effect->IsAura(SPELL_AURA_TRANSFORM))
+                            if (CreatureTemplate const* transformInfo = sObjectMgr->GetCreatureTemplate(effect->MiscValue))
+                            {
+                                cinfo = transformInfo;
+                                break;
+                            }
+
                 if (cinfo->flags_extra & CREATURE_FLAG_EXTRA_TRIGGER)
-                    displayId = cinfo->GetFirstVisibleModel()->CreatureDisplayID;
-                else if (displayId == int32(cinfo->GetFirstInvisibleModel()->CreatureDisplayID))
-                    displayId = int32(cinfo->GetFirstVisibleModel()->CreatureDisplayID);
+                    if (receiver->IsGameMaster())
+                        displayId = cinfo->GetFirstVisibleModel()->CreatureDisplayID;
             }
+
+            return displayId;
         }
+    };
 
-        return displayId;
-    }
-};
-
-template<>
-class ViewerDependentValue<UF::UnitData::FactionTemplateTag>
-{
-public:
-    using ValueType = UF::UnitData::FactionTemplateTag::ValueType;
-
-    static ValueType GetValue(ValueType factionTemplate, Unit const* unit, Player const* receiver)
+    template<>
+    class ViewerDependentValue<UF::UnitData::FactionTemplateTag>
     {
-        if (unit->IsControlledByPlayer() && receiver != unit && sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP) && unit->IsInRaidWith(receiver))
+    public:
+        using ValueType = UF::UnitData::FactionTemplateTag::ValueType;
+
+        static ValueType GetValue(ValueType factionTemplate, Unit const* unit, Player const* receiver)
         {
-            FactionTemplateEntry const* ft1 = unit->GetFactionTemplateEntry();
-            FactionTemplateEntry const* ft2 = receiver->GetFactionTemplateEntry();
-            if (ft1 && ft2 && !ft1->IsFriendlyTo(ft2))
-                // pretend that all other HOSTILE players have own faction, to allow follow, heal, rezz (trade wont work)
-                factionTemplate = receiver->getFaction();
+            if (unit->IsControlledByPlayer() && receiver != unit && sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP) && unit->IsInRaidWith(receiver))
+            {
+                FactionTemplateEntry const* ft1 = unit->GetFactionTemplateEntry();
+                FactionTemplateEntry const* ft2 = receiver->GetFactionTemplateEntry();
+                if (ft1 && ft2 && !ft1->IsFriendlyTo(ft2))
+                    // pretend that all other HOSTILE players have own faction, to allow follow, heal, rezz (trade wont work)
+                    factionTemplate = receiver->GetFaction();
+            }
+
+            return factionTemplate;
         }
+    };
 
-        return factionTemplate;
-    }
-};
-
-template<>
-class ViewerDependentValue<UF::UnitData::FlagsTag>
-{
-public:
-    using ValueType = UF::UnitData::FlagsTag::ValueType;
-
-    static ValueType GetValue(ValueType flags, uint32 flagIndex, Unit const* /*unit*/, Player const* receiver)
+    template<>
+    class ViewerDependentValue<UF::UnitData::FlagsTag>
     {
-        if (flagIndex == 0)
+    public:
+        using ValueType = UF::UnitData::FlagsTag::ValueType;
+
+        static ValueType GetValue(ValueType flags, Unit const* /*unit*/, Player const* receiver)
         {
             // Gamemasters should be always able to select units - remove not selectable flag
             if (receiver->IsGameMaster())
                 flags &= ~UNIT_FLAG_NOT_SELECTABLE;
+
+            return flags;
         }
-        else if (flagIndex == 1)
+    };
+
+    template<>
+    class ViewerDependentValue<UF::UnitData::AuraStateTag>
+    {
+    public:
+        using ValueType = UF::UnitData::AuraStateTag::ValueType;
+
+        static ValueType GetValue(ValueType /*auraState*/, Unit const* unit, Player const* receiver)
         {
-            // Gamemasters should be always able to select units - remove selection disabled flag
-            if (receiver->IsGameMaster())
-                flags &= ~UNIT_FLAG2_SELECTION_DISABLED;
+            // Check per caster aura states to not enable using a spell in client if specified aura is not by target
+            return unit->BuildAuraStateUpdateForTarget(receiver);
         }
+    };
 
-        return flags;
-    }
-};
-
-template<>
-class ViewerDependentValue<UF::UnitData::AuraStateTag>
-{
-public:
-    using ValueType = UF::UnitData::AuraStateTag::ValueType;
-
-    static ValueType GetValue(ValueType /*auraState*/, Unit const* unit, Player const* receiver)
+    template<>
+    class ViewerDependentValue<UF::UnitData::PvpFlagsTag>
     {
-        // Check per caster aura states to not enable using a spell in client if specified aura is not by target
-        return unit->BuildAuraStateUpdateForTarget(receiver);
-    }
-};
+    public:
+        using ValueType = UF::UnitData::PvpFlagsTag::ValueType;
 
-template<>
-class ViewerDependentValue<UF::UnitData::PvpFlagsTag>
-{
-public:
-    using ValueType = UF::UnitData::PvpFlagsTag::ValueType;
-
-    static ValueType GetValue(ValueType pvpFlags, Unit const* unit, Player const* receiver)
-    {
-        if (unit->IsControlledByPlayer() && receiver != unit && sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP) && unit->IsInRaidWith(receiver))
+        static ValueType GetValue(ValueType pvpFlags, Unit const* unit, Player const* receiver)
         {
-            FactionTemplateEntry const* ft1 = unit->GetFactionTemplateEntry();
-            FactionTemplateEntry const* ft2 = receiver->GetFactionTemplateEntry();
-            if (ft1 && ft2 && !ft1->IsFriendlyTo(ft2))
-                // Allow targeting opposite faction in party when enabled in config
-                pvpFlags &= UNIT_BYTE2_FLAG_SANCTUARY;
+            if (unit->IsControlledByPlayer() && receiver != unit && sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_GROUP) && unit->IsInRaidWith(receiver))
+            {
+                FactionTemplateEntry const* ft1 = unit->GetFactionTemplateEntry();
+                FactionTemplateEntry const* ft2 = receiver->GetFactionTemplateEntry();
+                if (ft1 && ft2 && !ft1->IsFriendlyTo(ft2))
+                    // Allow targeting opposite faction in party when enabled in config
+                    pvpFlags &= UNIT_BYTE2_FLAG_SANCTUARY;
+            }
+
+            return pvpFlags;
         }
+    };
 
-        return pvpFlags;
-    }
-};
-
-template<>
-class ViewerDependentValue<UF::UnitData::NpcFlagsTag>
-{
-public:
-    using ValueType = UF::UnitData::NpcFlagsTag::ValueType;
-
-    static ValueType GetValue(ValueType npcFlag, uint32 i, Unit const* unit, Player const* receiver)
+    template<>
+    class ViewerDependentValue<UF::UnitData::NpcFlagsTag>
     {
-        if (i == 0 && unit->IsCreature() && !receiver->CanSeeSpellClickOn(unit->ToCreature()))
-            npcFlag &= ~UNIT_NPC_FLAG_SPELLCLICK;
+    public:
+        using ValueType = UF::UnitData::NpcFlagsTag::ValueType;
 
-        return npcFlag;
-    }
-};
+        static ValueType GetValue(ValueType npcFlag, uint32 i, Unit const* unit, Player const* receiver)
+        {
+            if (i == 0 && unit->IsCreature() && !receiver->CanSeeSpellClickOn(unit->ToCreature()))
+                npcFlag &= ~UNIT_NPC_FLAG_SPELLCLICK;
 
-template<>
-class ViewerDependentValue<UF::GameObjectData::FlagsTag>
-{
-public:
-    using ValueType = UF::GameObjectData::FlagsTag::ValueType;
+            return npcFlag;
+        }
+    };
 
-    static ValueType GetValue(ValueType flags, GameObject const* gameObject, Player const* receiver)
+    template<>
+    class ViewerDependentValue<UF::GameObjectData::FlagsTag>
     {
-        if (gameObject->GetGoType() == GAMEOBJECT_TYPE_CHEST)
-            if (gameObject->GetGOInfo()->chest.usegrouplootrules && !gameObject->IsLootAllowedFor(receiver))
-                flags |= GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE;
+    public:
+        using ValueType = UF::GameObjectData::FlagsTag::ValueType;
 
-        return flags;
-    }
-};
+        static ValueType GetValue(ValueType flags, GameObject const* gameObject, Player const* receiver)
+        {
+            if (gameObject->GetGoType() == GAMEOBJECT_TYPE_CHEST)
+                if (gameObject->GetGOInfo()->chest.usegrouplootrules && !gameObject->IsLootAllowedFor(receiver))
+                    flags |= GO_FLAG_LOCKED | GO_FLAG_NOT_SELECTABLE;
 
-template<>
-class ViewerDependentValue<UF::GameObjectData::LevelTag>
-{
-public:
-    using ValueType = UF::GameObjectData::LevelTag::ValueType;
+            return flags;
+        }
+    };
 
-    static ValueType GetValue(ValueType level, GameObject const* gameObject, Player const* /*receiver*/)
+    template<>
+    class ViewerDependentValue<UF::GameObjectData::LevelTag>
     {
-        bool isStoppableTransport = gameObject->GetGoType() == GAMEOBJECT_TYPE_TRANSPORT && !gameObject->GetGOValue()->Transport.StopFrames->empty();
-        return isStoppableTransport ? gameObject->GetGOValue()->Transport.PathProgress : level;
-    }
-};
+    public:
+        using ValueType = UF::GameObjectData::LevelTag::ValueType;
 
-template<>
-class ViewerDependentValue<UF::GameObjectData::StateTag>
-{
-public:
-    using ValueType = UF::GameObjectData::StateTag::ValueType;
+        static ValueType GetValue(ValueType level, GameObject const* gameObject, Player const* /*receiver*/)
+        {
+            bool isStoppableTransport = gameObject->GetGoType() == GAMEOBJECT_TYPE_TRANSPORT && !gameObject->GetGOValue()->Transport.StopFrames->empty();
+            return isStoppableTransport ? gameObject->GetGOValue()->Transport.PathProgress : level;
+        }
+    };
 
-    static ValueType GetValue(ValueType state, GameObject const* gameObject, Player const* /*receiver*/)
+    template<>
+    class ViewerDependentValue<UF::GameObjectData::StateTag>
     {
-        bool isStoppableTransport = gameObject->GetGoType() == GAMEOBJECT_TYPE_TRANSPORT && !gameObject->GetGOValue()->Transport.StopFrames->empty();
-        if (isStoppableTransport && gameObject->GetGoState() == GO_STATE_TRANSPORT_ACTIVE)
-            if ((gameObject->GetGOValue()->Transport.StateUpdateTimer / 20000) & 1)
-                state = GO_STATE_TRANSPORT_STOPPED;
+    public:
+        using ValueType = UF::GameObjectData::StateTag::ValueType;
 
-        return state;
-    }
-};
+        static ValueType GetValue(ValueType state, GameObject const* gameObject, Player const* /*receiver*/)
+        {
+            bool isStoppableTransport = gameObject->GetGoType() == GAMEOBJECT_TYPE_TRANSPORT && !gameObject->GetGOValue()->Transport.StopFrames->empty();
+            if (isStoppableTransport && gameObject->GetGoState() == GO_STATE_TRANSPORT_ACTIVE)
+                if ((gameObject->GetGOValue()->Transport.StateUpdateTimer / 20000) & 1)
+                    state = GO_STATE_TRANSPORT_STOPPED;
+
+            return state;
+        }
+    };
 }
 
 #endif // ViewerDependentValues_h__
